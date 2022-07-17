@@ -1,10 +1,12 @@
 """
 Tracking state and handling state actions.
 """
-# from __future__ import annotations
+
+from __future__ import annotations
 
 import random
 import numpy as np
+import copy
 
 from utils import empty_board, BOARD_WIDTH, BOARD_HEIGHT, BOARD_VANISH_HEIGHT, overlap
 from model.tetromino import AnyTetromino, ALL_SHAPE_TYPES, EMPTY_CELL
@@ -56,7 +58,7 @@ class State:
         state[~empty_cell_mask] = 1
         return state.astype(float)
 
-    def step(self, action: Action) -> tuple[np.ndarray, float, bool]:
+    def step(self, action: Action) -> tuple[State, float, bool]:
         """
         Mutate current state with given action.
         Return a tuple containing:
@@ -64,35 +66,36 @@ class State:
         - Reward
         - Flag indicating game over
         """
-        self.num_moves += 1
-        old_score = self.score
-        old_state = self.get_state()
+        new_state = copy.deepcopy(self)
+        new_state.num_moves += 1
+        old_score = new_state.score
+        old_state = new_state.get_state()
         locked = False
         match action:
             case Action.LEFT:
-                self.cur_piece.shift(self.board, (-1, 0))
+                new_state.cur_piece.shift(new_state.board, (-1, 0))
             case Action.RIGHT:
-                self.cur_piece.shift(self.board, (1, 0))
+                new_state.cur_piece.shift(new_state.board, (1, 0))
             case Action.ROTATE_CW:
-                self.cur_piece.rotate_CW(self.board)
+                new_state.cur_piece.rotate_CW(new_state.board)
             case Action.ROTATE_CCW:
-                self.cur_piece.rotate_CCW(self.board)
+                new_state.cur_piece.rotate_CCW(new_state.board)
             case Action.SOFT_DROP:
-                locked = not self.cur_piece.shift(self.board, (0, -1))
+                locked = not new_state.cur_piece.shift(new_state.board, (0, -1))
             case Action.HARD_DROP:
-                self.cur_piece.hard_drop(self.board)
+                new_state.cur_piece.hard_drop(new_state.board)
                 locked = True
         if locked:
-            self._lock_piece_and_update()
-        reward = self.score - old_score
-        if np.all(self.get_state() == old_state):
+            new_state._lock_piece_and_update()
+        reward = new_state.score - old_score
+        if np.all(new_state.get_state() == old_state):
             reward += State.ILLEGAL_MOVE_PENALTY
-        done = self._is_game_over()
+        done = new_state._is_game_over()
         if done:
             reward += State.GAME_OVER_PENALTY
         if action in [Action.LEFT, Action.RIGHT, Action.ROTATE_CW, Action.ROTATE_CCW]:
             reward += State.REVERSIBLE_ACTION_PENALTY
-        return self.get_state(), reward, done
+        return new_state, reward, done
 
     def _is_game_over(self):
         return overlap(self.next_piece.get_grid(), self.board)

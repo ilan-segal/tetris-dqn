@@ -79,7 +79,7 @@ class DQN(nn.Module):
 
 
 MEMORY_SIZE = 1000000
-BATCH_SIZE = 2**7
+BATCH_SIZE = 2 ** 7
 GAMMA = 0.99999
 EPS_START = 1.00
 EPS_END = 0.00
@@ -198,26 +198,6 @@ def optimize_model():
 
 
 if __name__ == '__main__':
-    # s = state.State()
-    # pbar = trange(MEMORY_SIZE // 20)
-    # pbar.set_description('Initializing memory')
-    # for i in pbar:
-    #     tensor = torch.tensor(s.get_state(), dtype=torch.float)
-    #     tensor = torch.unsqueeze(tensor, 0)
-    #     a = select_action(tensor.double(), init=True)
-    #     _, reward, done = s.step(action.Action(a))
-    #     reward = torch.tensor([reward], device=device)
-    #     # Observe new state
-    #     next_state = torch.tensor(s.get_state())
-    #     next_state = torch.unsqueeze(next_state, 0)
-    #     if done:
-    #         next_state = None
-    #     # Store the transition in memory
-    #     memory.push(tensor, torch.tensor([[int(a)]]), next_state, reward)
-    #     # Move to the next state
-    #     state_tensor = next_state
-    #     if done:
-    #         s = state.State()
 
     v = View()
     num_episodes = 5000
@@ -230,7 +210,7 @@ if __name__ == '__main__':
         for t in count():
             # Select and perform an action
             a = select_action(state_tensor.double())
-            _, reward, done = s.step(action.Action(a))
+            s, reward, done = s.step(action.Action(a))
             reward = torch.tensor([reward], device=device, dtype=torch.float64)
 
             v.draw(s)

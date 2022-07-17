@@ -22,4 +22,4 @@ if __name__ == '__main__':
             print('Please select from: ' + ' '.join(sorted(ACTION_MAP.keys())))
             continue
         player_action = ACTION_MAP[player_action]
-        s.step(player_action)
+        s, _, _ = s.step(player_action)
